@@ -1,0 +1,63 @@
+<polymer-element name="ven-reddit-comment" attributes="comment">
+  <template>
+    <style>
+    #meta, #text {
+      font-size: 0.95em;
+      padding-left: 0.4em;
+    }
+    #meta {
+      margin-bottom: 0.2em;
+      font-size: 0.95em;
+    }
+    #text {
+      max-width: 40em;
+    }
+    #text * {
+      margin-top: 0;
+    }
+    #text p, #text blockquote {
+      margin-bottom: 0.5em;
+    }
+    #text blockquote, #flair {
+      background-color: #eee;
+      border: 1px solid #aaa;
+      padding: 0 0.2em;
+    }
+    #text blockquote {
+      margin-left: 0.5em;
+    }
+    #text blockquote p:last-child {
+      margin-bottom: 0;
+    }
+    #replies {
+      border-left: 0.2em solid #4F7DC9;
+      margin-left: 0.4em;
+    }
+    </style>
+    <p>
+      <div id="meta">
+        <template bind="{{ comment.data }}">
+          <strong>{{ author }}</strong>
+          <template if="{{ author_flair_text }}"><span id="flair">{{ author_flair_text }}</span></template>
+          {{ score }} {{ created_utc | unixTimeAgo }}
+        </template>
+      </div>
+      <div id="text"></div>
+      <div id="replies">
+        <template repeat="{{ reply in comment.data.replies.data.children }}">
+          <ven-reddit-comment comment="{{ reply }}"></ven-reddit-comment>
+        </template>
+      </div>
+    </p>
+  </template>
+  <script>
+    Polymer('ven-reddit-comment', {
+      comment: {},
+      commentChanged: function () {
+        // their html is probably safe and doesn't cause jank, but it comes with html entities
+        this.$.text.innerHTML = this.comment.data.body_html;
+        this.$.text.innerHTML = this.$.text.textContent;
+      },
+    });
+  </script>
+</polymer-element>

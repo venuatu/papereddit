@@ -1,0 +1,37 @@
+<link rel="import" href="ven-reddit-thread-short.html" />
+
+<polymer-element name="ven-reddit-threads" attributes="subreddit">
+  <template>
+    <template repeat="{{ thread in data }}">
+      <ven-reddit-thread-short data="{{ thread.data }}" on-refresh="{{ ready }}"></ven-reddit-thread-short>
+    </template>
+    <template if="{{ !data.length }}">
+      <p>There seems to be nothing here, try another subreddit.</p>
+    </template>
+  </template>
+  <script>
+    Polymer('ven-reddit-threads', {
+      data: ['Nothing yet'],
+      subreddit: '',
+      ready: function () {
+        this.subredditChanged();
+      },
+      subredditChanged: function () {
+        if (!this.subreddit) {
+          return;
+        }
+        this.fire('request');
+        fetch('http://www.reddit.com/r/'+ this.subreddit +'/.json').then(function (data) {
+            this.async(function () {
+              this.data = data.data.children;
+            });
+            this.fire('request-end');
+          }.bind(this), function (e) {
+            console.log(e, e.stack);
+            this.data = [];
+            this.fire('request-end');
+        }.bind(this));
+      }
+    });
+  </script>
+</polymer-element>

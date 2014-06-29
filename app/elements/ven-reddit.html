@@ -1,0 +1,114 @@
+<link rel="import" href="../bower_components/core-toolbar/core-toolbar.html" />
+<link rel="import" href="../bower_components/core-input/core-input.html" />
+<link rel="import" href="../bower_components/paper-progress/paper-progress.html" />
+
+<link rel="import" href="ven-reddit-subreddits.html">
+<link rel="import" href="ven-reddit-thread.html">
+
+<polymer-element name="ven-reddit">
+  <template>
+    <style>
+    #container {
+      position: fixed;
+      height: 100%;
+      width: 100%;
+    }
+    #progress {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+    }
+    .box {
+      overflow: none;
+      overflow-x: auto;
+      word-wrap: break-word;
+      border-left: 0.2em solid #4F7DC9;
+    }
+    core-toolbar, paper-progress::shadow #activeProgress {
+      background-color: #4F7DC9;
+    }
+    </style>
+    <div id="container" layout vertical on-request="{{ request }}" on-request-end="{{ requestEnd }}">
+      <paper-progress id="progress" value="{{ progress }}"></paper-progress>
+      <div flex layout horizontal style="height: 100%">
+        <div class="box" flex two>
+          <core-toolbar layout center center-justified>
+            <span>papereddit</span>
+            <core-input flex floatinglabel value="{{ subreddit }}" label="subreddit"></core-input>
+            <paper-icon-button icon="refresh" on-click="{{ refresh }}"></paper-icon-button>
+          </core-toolbar>
+          <ven-reddit-threads subreddit="{{ subreddit }}" on-thread-selected="{{ threadSelected }}"></ven-reddit-threads>
+        </div>
+        <div class="box" flex four>
+          <ven-reddit-thread link="{{ threadLink }}" thread="{{ thread }}" thumbnail="{{ threadThumb }}"></ven-reddit-thread>
+        </div>
+      </div>
+    </div>
+  </template>
+  <script>
+  Polymer('ven-reddit', {
+    threadSelected: function (e, selectedThread) {
+      this.async(function () {
+        this.thread = selectedThread;
+        this.threadLink = selectedThread.permalink;
+        this.threadThumb = selectedThread.thumbnail;
+      });
+      this.setHash(selectedThread.permalink);
+    },
+    refresh: function () {
+      this.fire('refresh');
+    },
+    setHash: function (page) {
+      if (history.pushstate) {
+        history.pushstate(null, null, '#'+ page)
+      } else {
+        location.hash = '#'+ page;
+      }
+    },
+    ready: function () {
+      var movePage = function () {
+        this.async(function () {
+          this.threadLink = location.hash.slice(1);
+        });
+      }.bind(this);
+      movePage();
+      if (history.pushState) {
+        window.onpopstate = movePage;
+      } else {
+        window.onhashchange = movePage;
+      }
+      this.subreddit = localStorage.subreddit;
+      if (!this.subreddit) {
+        this.subreddit = 'earthporn';
+      }
+    },
+    subredditChanged: function () {
+      localStorage.subreddit = this.subreddit;
+    },
+    requests: 1,
+    requestsEnded: 1, 
+    request: function () {
+      if (this.requests === 1 && this.requestsEnded === 1) {
+        this.requestsEnded = 0;
+      } else {
+        this.requests++;
+      }
+      this.progressDraw();
+    },
+    requestEnd: function () {
+      this.async(function () {
+        this.requestsEnded++;
+        this.progressDraw();
+      }, null, 1);
+    },
+    progressDraw: function () {
+      if (this.requests <= this.requestsEnded) {
+        this.requests = this.requestsEnded = 1;
+      }
+      this.progress = this.requestsEnded / this.requests * 100;
+      Platform.flush();
+    },
+  })
+  </script>
+</polymer-element>

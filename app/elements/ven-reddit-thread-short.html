@@ -1,0 +1,59 @@
+<link rel="import" href="../bower_components/paper-ripple/paper-ripple.html" />
+
+<polymer-element name="ven-reddit-thread-short" attributes="data">
+  <template>
+    <style>
+    .thread {
+      min-height: 70px;
+      cursor: pointer;
+      position: relative;
+    }
+    .thread:hover {
+      background-color: #fcfcfc;
+    }
+    paper-ripple {
+      color: #ccc;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+    .text {
+      padding: 0.5em;
+    }
+    #score {
+      width: 35px;
+      text-align: center;
+    }
+    small {
+      color: #222;
+    }
+    </style>
+    <div class="thread" layout horizontal center on-click="{{ threadClick }}">
+      <paper-ripple id="ripple"></paper-ripple>
+      <div id="score" layout center center-justified>
+        <small>{{ data.score }}</small>
+      </div>
+      <template if="{{ data.thumbnail !== 'self' && data.thumbnail !== 'default' }}">
+        <img _src="{{ data.thumbnail }}" />
+      </template>
+      <div flex center class="text">
+        <div>
+          <strong><a _href="{{ data.url }}">{{ data.title }}</a></strong> <small>({{ data.domain }})</small>
+        </div>
+        <small>submitted {{ data.created_utc | unixTimeAgo }} by {{ data.author }} {{ data.num_comments }} comments</small>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer('ven-reddit-thread-short', {
+      threadClick: function (e) {
+        e.preventDefault();
+        this.fire('thread-selected', this.data);
+        this.$.ripple.downAction({x: e.clientX, y: e.clientY});
+        this.$.ripple.upAction();
+      },
+    })
+  </script>
+</polymer-element>
